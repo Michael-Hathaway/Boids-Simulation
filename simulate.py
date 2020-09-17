@@ -3,8 +3,8 @@ import numpy as np
 from boid import Boid
 
 # Constants
-WIDTH = 1000
-HEIGHT = 1000
+WIDTH = 800
+HEIGHT = 800
 
 
 def create_flock(size=30):
@@ -29,7 +29,9 @@ def draw():
 
     for boid in flock:
         boid.show()
+        boid.align_to_neighbors(flock)
         boid.update_position()
+        boid.handle_wall_collision()
 
 
 if __name__ == "__main__":
