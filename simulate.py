@@ -3,8 +3,8 @@ import numpy as np
 from boid import Boid
 
 # Constants
-WIDTH = 800
-HEIGHT = 800
+WIDTH = 1000
+HEIGHT = 1000
 
 
 def create_flock(size=30):
@@ -25,13 +25,16 @@ flock = create_flock()
 
 def draw():
     # update the grid - done every time
-    background(30, 30, 47)
+    #background(30, 30, 47)
+    background(10, 10, 27)
 
     for boid in flock:
         boid.show()
         boid.align_to_neighbors(flock)
+        boid.maintain_group_cohesion(flock)
+        boid.maintain_group_seperation(flock)
         boid.update_position()
-        boid.handle_wall_collision()
+        boid.avoid_wall_collision()
 
 
 if __name__ == "__main__":

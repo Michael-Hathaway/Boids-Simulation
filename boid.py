@@ -1,16 +1,19 @@
-from p5 import setup, draw, size, background, run, stroke, circle
+from p5 import setup, draw, size, background, run, stroke, circle, fill, line
 import numpy as np
 import math
 
 # Constants
-MAX_SPEED = 15.0
+MAX_SPEED = 14.0
 MIN_SPEED = 5.0
-HEIGHT = 800
-WIDTH = 800
+HEIGHT = 1000
+WIDTH = 1000
 PERCEPTION_DISTANCE = 100
+SEPERATION_DISTANCE = 60
+MAX_COHESION = 5.0
+MAX_SEPERATION = 5.0
 WALL_FACTOR = 0.45
 WALL_FORCE = 5.0
-WALL_DISTANCE = 60
+WALL_DISTANCE = 80
 
 
 class Boid:
@@ -27,10 +30,12 @@ class Boid:
     def show(self):
         # show the boid on the grid
         stroke(255)
-        circle(self.position, 8)
+        fill(255)
+        circle(self.position, 7)
 
-    def handle_wall_collision(self):
-        # avoid wall collisions
+    def avoid_wall_collision(self):
+        # change velocity when approaching a wall in order to
+        # avoid a collision
         if self.position[0] >= WIDTH - WALL_DISTANCE:
             self.velocity[0] = self.velocity[0] - WALL_FORCE * WALL_FACTOR
         elif self.position[0] <= WALL_DISTANCE:
@@ -85,6 +90,62 @@ class Boid:
             average_velocity = (average_velocity /
                                 np.linalg.norm(average_velocity)) * MAX_SPEED
             steering = average_velocity - self.velocity
+
+        self.acceleration += steering
+
+    def maintain_group_cohesion(self, flock):
+        steering = np.asarray([0.0, 0.0])
+        average_center_of_mass = np.asarray([0.0, 0.0])
+        total_neighbors = 0
+
+        for boid in flock:
+            if np.linalg.norm(boid.position - self.position) < PERCEPTION_DISTANCE:
+                average_center_of_mass += boid.position
+                total_neighbors += 1
+
+        if total_neighbors > 0:
+            average_center_of_mass /= total_neighbors
+            direction_to_center = average_center_of_mass - self.position
+
+            if np.linalg.norm(direction_to_center) > 0:
+                direction_to_center = (direction_to_center / np.linalg.norm(direction_to_center)
+                                       ) * MAX_SPEED
+
+            steering = direction_to_center - self.velocity
+
+            if np.linalg.norm(steering) > MAX_COHESION:
+                steering = (steering / np.linalg.norm(steering)) * MAX_COHESION
+
+        self.acceleration += steering
+
+    def maintain_group_seperation(self, flock):
+        steering = np.asarray([0.0, 0.0])
+        average_vector = np.asarray([0.0, 0.0])
+        total_neighbors = 0
+
+        for boid in flock:
+            x_difference = self.position[0] - boid.position[0]
+            y_difference = self.position[1] - boid.position[1]
+            distance = self.get_magnitude(x_difference, y_difference)
+
+            if (x_difference != 0 or y_difference != 0) and distance <= SEPERATION_DISTANCE:
+                difference = self.position - boid.position
+                difference = difference / distance
+                average_vector += difference
+                total_neighbors += 1
+
+        if total_neighbors > 0:
+            average_vector /= total_neighbors
+
+            if np.linalg.norm(steering) > 0:
+                average_vector = (average_vector / np.linalg.norm(steering)
+                                  ) * MAX_SPEED
+
+            steering = average_vector - self.velocity
+
+            if np.linalg.norm(steering) > MAX_SEPERATION:
+                steering = (steering / np.linalg.norm(steering)) * \
+                    MAX_SEPERATION
 
         self.acceleration += steering
 
