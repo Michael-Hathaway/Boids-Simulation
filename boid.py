@@ -1,4 +1,4 @@
-from p5 import setup, draw, size, background, run, stroke, circle, fill, line
+from p5 import stroke, circle, fill, line
 import numpy as np
 import math
 
